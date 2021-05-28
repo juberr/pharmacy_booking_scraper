@@ -1,1 +1,4 @@
 selenium==3.141.0
+aiohttp==3.7.4.post0
+azure_storage==0.37.0
+python-dotenv==0.17.1

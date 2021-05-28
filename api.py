@@ -2,7 +2,6 @@ import logging
 import os
 import csv
 from pharmacybooking import scrape_pharm_booking
-from bs4 import BeautifulSoup as soup
 from datetime import datetime
 from dotenv import load_dotenv
 import aiohttp
