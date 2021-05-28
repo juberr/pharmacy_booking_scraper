@@ -9,20 +9,16 @@ from urllib import parse
 import csv
 import re
 
-driver = webdriver.Chrome('./chromedriver')
-
-
 
 def parse_url_data(url, avail):
 
     queries=parse.parse_qs(parse.urlparse(url).query)
     name = queries['location'][0].split(':')[0]
     address = queries['location'][0].split(':')[1]
-    postal_code = re.search('[A-Z]{1}[0-9]{1}[A-Z]{1}\s[0-9]{1}[A-Z]{1}[0-9]{1}', address).group(0)
+    postal_code = re.search('[A-Z]{1}[0-9]{1}[A-Z]{1}\s[0-9]{1}[A-Z]{1}[0-9]{1}', address).group(0).replace(' ', '')
     province = address.split(',')[-1].split()[0]
-    uuid = queries['owner'][0]
-    availability = bool(avail)
-    row = [name, address, postal_code, province, uuid, availability, url]
+    store_key = address.replace(' ', '').replace(',', '')
+    row = [name, address, postal_code, province, store_key, avail, url]
 
     return row
 
@@ -46,80 +42,81 @@ def get_options(driver, time, data):
 
     return options
 
-def scrape_pharm_booking(driver, file_writer):
+def scrape_pharm_booking():
 
-    driver.get('https://www.pharmacybooking.com/')
-    button = WebDriverWait(driver, 5).until(ec.visibility_of_element_located((By.CLASS_NAME, 'btn-cta')))
+    with open('list.csv', mode='w') as file:
+        file_writer = csv.writer(file, delimiter=',')
+        file_writer.writerow(['Name', 'Address', 'Postal Code', 'Province', 'Store_id', 'Availability', 'URL'])
 
-    button.click()
+        driver = webdriver.Chrome('./chromedriver')
 
-    provinces = get_options(driver, 5, 'value')
+        driver.get('https://www.pharmacybooking.com/')
+        button = driver.find_element_by_class_name('btn-cta')
+        button.click()
+        provinces = get_options(driver, 5, 'value')
 
-    for province in provinces:
+        for province in provinces:
 
-        click(driver, province)
+            click(driver, province)
 
-        try:
-
-            WebDriverWait(driver, 5).until(ec.visibility_of_element_located((By.CLASS_NAME, 'error')))
-             # not participating
-            print(f'{province} not participating, skipping')
-            backbutton = driver.find_element_by_class_name('btn')
-            backbutton.click()
-            continue
-
-        except TimeoutException:
-
-            options = WebDriverWait(driver, 2).until(ec.visibility_of_element_located((By.TAG_NAME, 'select')))
-            options = driver.find_elements_by_tag_name('option')
-            # looks like they currently have one field for all covid-19 vaccination appointments
             try:
-                covid_options = [option.text for option in options if 'covid 19' in option.text.lower()]
-                covid_options[0]
-            except IndexError:
-                print(f'{province} has no covid-19 vaccine offerings, skipping')
+
+                WebDriverWait(driver, 3).until(ec.visibility_of_element_located((By.CLASS_NAME, 'error')))
+                # not participating
+                print(f'{province} not participating, skipping')
                 backbutton = driver.find_element_by_class_name('btn')
                 backbutton.click()
                 continue
 
-            # for covid_option in covid_options:
+            except TimeoutException:
 
-            click(driver, covid_options[0])
+                options = driver.find_element_by_tag_name('select')
+                options = options.find_elements_by_tag_name('option')
+                # looks like they currently have one field for all covid-19 vaccination appointments
+                try:
+                    covid_options = [option.text for option in options if 'covid 19' in option.text.lower()]
+                    covid_options[0]
+                except IndexError:
+                    print(f'{province} has no covid-19 vaccine offerings, skipping')
+                    backbutton = driver.find_element_by_class_name('btn')
+                    backbutton.click()
+                    continue
 
-            cities = get_options(driver, 5, 'value')
+                # for covid_option in covid_options:
 
-            for city in cities:
+                click(driver, covid_options[0])
 
-                click(driver, city)
+                cities = get_options(driver, 5, 'value')
 
-                pharmacies = get_options(driver, 5, 'text')
-                print(pharmacies)
+                for city in cities:
 
-                for pharmacy in pharmacies:
+                    click(driver, city)
 
-                    click(driver, pharmacy)
+                    pharmacies = get_options(driver, 5, 'text')
+                    print(pharmacies)
 
-                    iframe = WebDriverWait(driver, 5).until(ec.visibility_of_element_located((By.TAG_NAME, 'iframe')))
-                    url = iframe.get_attribute('src')
-                    driver.get(url)
-                    avail =  driver.find_elements_by_xpath("//span[@data-qa='activeCalendarDay']")
-                    data = parse_url_data(url, avail)
-                    file_writer.writerow(data)
-                    driver.back()
+                    for pharmacy in pharmacies:
+
+                        click(driver, pharmacy)
+
+                        iframe = WebDriverWait(driver, 5).until(ec.visibility_of_element_located((By.TAG_NAME, 'iframe')))
+                        url = iframe.get_attribute('src')
+                        driver.get(url)
+                        avail =  1 if driver.find_elements_by_xpath("//span[@data-qa='activeCalendarDay']") else 0
+                        data = parse_url_data(url, avail)
+                        file_writer.writerow(data)
+                        driver.back()
+                        driver.back()
+
                     driver.back()
 
                 driver.back()
 
             driver.back()
 
-        driver.back()
+        driver.quit()
+
+scrape_pharm_booking()
 
             
 
-                    
-with open('scrape.csv', mode='w') as file:
-    file_writer = csv.writer(file, delimiter=',')
-    file_writer.writerow(['Name', 'Address', 'Postal Code', 'Province', 'UUID', 'Availability', 'URL'])
-    scrape_pharm_booking(driver, file_writer)
-
-driver.quit()
