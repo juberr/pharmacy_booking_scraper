@@ -1,7 +1,7 @@
 import logging
 import os
 import csv
-from pharmacybooking import scrape_pharm_booking
+from pb_avail_check import get_html_and_avail
 from datetime import datetime
 from dotenv import load_dotenv
 import aiohttp
@@ -124,14 +124,13 @@ async def create_or_update_availability(session, location, available):
 
 async def main(mytimer: func.TimerRequest) -> None:
 
-    scrape_pharm_booking()
-
     async with aiohttp.ClientSession() as session:
 
         with open('list.csv', newline='') as pharma:
             pharma_reader = csv.reader(pharma)
             next(pharma_reader)
             pharmacies = [i for i in pharma_reader]
+
         for i in pharmacies:
 
             store_name = i[0]
@@ -139,11 +138,12 @@ async def main(mytimer: func.TimerRequest) -> None:
             postal_code = i[2]
             province = i[3]
             store_id = i[4]
-            available = i[5]
             store_url = i[6]
 
             if not postal_code:
                 continue
+
+            available = await get_html_and_avail(session, store_url)
             logging.info(f'Location: {store_id} {postal_code}')
             location_id = await get_or_create_location(session, store_id, store_name, address, postal_code, province, store_url)
             print(location_id)
