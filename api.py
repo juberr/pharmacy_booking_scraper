@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import aiohttp
 import asyncio
+import time
 
 
 import azure.functions as func
@@ -138,7 +139,7 @@ async def main(mytimer: func.TimerRequest) -> None:
             postal_code = i[2]
             province = i[3]
             store_id = i[4]
-            store_url = i[6]
+            store_url = i[5]
 
             if not postal_code:
                 continue
@@ -153,4 +154,5 @@ async def main(mytimer: func.TimerRequest) -> None:
         
 
 if __name__ == '__main__':
+
     asyncio.run(main(func.TimerRequest))
