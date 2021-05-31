@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup as soup
 import csv
-import requests as req
 import re
 from urllib import parse
 import aiohttp

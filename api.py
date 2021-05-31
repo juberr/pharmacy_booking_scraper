@@ -6,7 +6,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 import aiohttp
 import asyncio
-import time
 
 
 import azure.functions as func

@@ -1,5 +1,4 @@
 aiohttp==3.7.4.post0
-selenium==3.141.0
-chromedriver_py==91.0.4472.19
 azure_storage==0.37.0
+beautifulsoup4==4.9.3
 python-dotenv==0.17.1
