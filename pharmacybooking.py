@@ -1,10 +1,10 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support.ui import  WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import TimeoutException
+from chromedriver_py import binary_path
 from urllib import parse
 import csv
 import re
@@ -48,7 +48,7 @@ def scrape_pharm_booking():
         file_writer = csv.writer(file, delimiter=',')
         file_writer.writerow(['Name', 'Address', 'Postal Code', 'Province', 'Store_id', 'Availability', 'URL'])
 
-        driver = webdriver.Chrome('./chromedriver')
+        driver = webdriver.Chrome(binary_path)
 
         driver.get('https://www.pharmacybooking.com/')
         button = driver.find_element_by_class_name('btn-cta')
@@ -117,5 +117,5 @@ def scrape_pharm_booking():
         driver.quit()
 
 
-            
+scrape_pharm_booking()
 
